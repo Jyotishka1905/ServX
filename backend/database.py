@@ -1,7 +1,12 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = "sqlite:///./servx.db"
+# Get the absolute path of the directory where this file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Point directly to servx.db using the absolute path
+DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'servx.db')}"
 
 engine = create_engine(
     DATABASE_URL,
@@ -19,9 +24,7 @@ Base = declarative_base()
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:
         db.close()
-        

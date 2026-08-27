@@ -1,6 +1,7 @@
+import React from 'react';
 import ServiceCard from "./ServiceCard";
 
-function ServicesSection() {
+function ServicesSection({ onExplore }) {
   const services = [
     {
       icon: "🔧",
@@ -66,36 +67,29 @@ function ServicesSection() {
 
   return (
     <section className="services-section">
-
       <div className="section-header">
-
         <p className="section-label">
           FIND THE RIGHT PROFESSIONAL
         </p>
-
         <h2>
           Find the Right Professional
         </h2>
-
         <p>
           Choose from trusted professionals across different services.
         </p>
-
       </div>
 
       <div className="services-grid">
-
         {services.map((service) => (
           <ServiceCard
             key={service.title}
             icon={service.icon}
             title={service.title}
             description={service.description}
+            onExplore={onExplore}
           />
         ))}
-
       </div>
-
     </section>
   );
 }

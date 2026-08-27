@@ -102,35 +102,20 @@ function Login() {
       // STORE AUTHENTICATION DATA
       // ========================================
 
-      localStorage.setItem(
-        "access_token",
-        access_token
-      );
+      // Fixed: Storing as "access_token" to match Home.jsx and EditProfile.jsx expectations
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("token_type", token_type);
+      localStorage.setItem("user", JSON.stringify(user));
 
-      localStorage.setItem(
-        "token_type",
-        token_type
-      );
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
+      // Dispatch storage event so open tabs/components (like Home.jsx) sync instantly
+      window.dispatchEvent(new Event("storage"));
 
 
       // ========================================
-      // REDIRECT BASED ON ACCOUNT TYPE
+      // REDIRECT TO HOME OR DASHBOARD
       // ========================================
 
-      if (user.account_type === "professional") {
-
-        navigate("/professional-dashboard");
-
-      } else {
-
-        navigate("/dashboard");
-
-      }
+      navigate("/");
 
 
     } catch (error) {

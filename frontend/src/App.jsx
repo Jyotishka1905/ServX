@@ -5,18 +5,17 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Services from "./pages/Services";
 import ProfessionalDashboard from "./pages/ProfessionalDashboard";
-
+import Dashboard from "./pages/Dashboard";
+import EditProfile from "./pages/EditProfile"; // <-- Imported Edit Profile Page
 
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
         {/* ========================================
             HOME PAGE
         ======================================== */}
-
         <Route
           path="/"
           element={<Home />}
@@ -26,7 +25,6 @@ function App() {
         {/* ========================================
             AUTHENTICATION
         ======================================== */}
-
         <Route
           path="/login"
           element={<Login />}
@@ -41,7 +39,6 @@ function App() {
         {/* ========================================
             SERVICES
         ======================================== */}
-
         <Route
           path="/services"
           element={<Services />}
@@ -51,7 +48,6 @@ function App() {
         {/* ========================================
             PROFESSIONAL DASHBOARD
         ======================================== */}
-
         <Route
           path="/professional-dashboard"
           element={<ProfessionalDashboard />}
@@ -61,14 +57,23 @@ function App() {
         {/* ========================================
             CUSTOMER DASHBOARD
         ======================================== */}
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
+        />
 
-        {/* We will create Dashboard.jsx later */}
+
+        {/* ========================================
+            EDIT PROFILE
+        ======================================== */}
+        <Route
+          path="/edit-profile"
+          element={<EditProfile />}
+        />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
-
 
 export default App;

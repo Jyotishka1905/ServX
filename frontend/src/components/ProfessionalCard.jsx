@@ -1,14 +1,24 @@
 function ProfessionalCard({
+  id,
   name,
   profession,
   rating,
   experience,
   price,
   location,
-  verified
+  verified,
+  matchScore,
+  onBookClick // <-- Prop to handle booking action
 }) {
   return (
     <div className="professional-card">
+
+      {/* AI Match Score Badge */}
+      {matchScore && (
+        <div className="match-badge" style={{ backgroundColor: '#e6f4ea', color: '#137333', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', display: 'inline-block' }}>
+          🔥 {matchScore}% Match
+        </div>
+      )}
 
       <div className="professional-image">
         👤
@@ -54,8 +64,9 @@ function ProfessionalCard({
             ₹{price}
           </strong>
 
-          <button>
-            View Profile
+          {/* Connected the click action to trigger booking */}
+          <button onClick={() => onBookClick && onBookClick({ id, name, profession, price })}>
+            Book Now
           </button>
 
         </div>

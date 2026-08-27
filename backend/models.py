@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from database import Base
 
@@ -97,4 +98,47 @@ class Professional(Base):
     user = relationship(
         "User",
         back_populates="professional"
+    )
+
+
+class Booking(Base):
+
+    __tablename__ = "bookings"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    customer_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    professional_id = Column(
+        Integer,
+        ForeignKey("professionals.id"),
+        nullable=False
+    )
+
+    service_date = Column(
+        String,
+        nullable=False
+    )
+
+    notes = Column(
+        String,
+        nullable=True
+    )
+
+    status = Column(
+        String,
+        default="Pending"
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
     )

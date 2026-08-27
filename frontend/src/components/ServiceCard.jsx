@@ -1,4 +1,4 @@
-function ServiceCard({ icon, title, description }) {
+function ServiceCard({ icon, title, description, onExplore }) {
   return (
     <div className="service-card">
 
@@ -10,7 +10,11 @@ function ServiceCard({ icon, title, description }) {
 
       <p>{description}</p>
 
-      <button className="service-link">
+      {/* Added onClick event handler to trigger navigation */}
+      <button 
+        className="service-link"
+        onClick={() => onExplore && onExplore(title)}
+      >
         Explore →
       </button>
 
