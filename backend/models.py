@@ -55,6 +55,11 @@ class Professional(Base):
         nullable=False
     )
 
+    name = Column(
+        String,
+        nullable=True
+    )
+
     profession = Column(
         String,
         nullable=False

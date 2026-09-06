@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
@@ -7,6 +7,7 @@ from jose import jwt, JWTError
 from database import get_db
 from models import User, Professional, Booking
 from auth_utils import SECRET_KEY, ALGORITHM
+from email_utils import send_email_notification
 
 router = APIRouter(
     prefix="/bookings",
@@ -46,7 +47,12 @@ def get_current_user(authorization: str = Header(None), db: Session = Depends(ge
 
 # 1. Customer creates a booking request
 @router.post("/")
-def create_booking(booking_data: BookingCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_booking(
+    booking_data: BookingCreate, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     if current_user.account_type != "customer":
         raise HTTPException(status_code=403, detail="Only customers can book services")
     
@@ -54,6 +60,8 @@ def create_booking(booking_data: BookingCreate, current_user: User = Depends(get
     prof = db.query(Professional).filter(Professional.id == booking_data.professional_id).first()
     if not prof:
         raise HTTPException(status_code=404, detail="Professional not found")
+
+    prof_user = db.query(User).filter(User.id == prof.user_id).first()
 
     new_booking = Booking(
         customer_id=current_user.id,
@@ -65,6 +73,23 @@ def create_booking(booking_data: BookingCreate, current_user: User = Depends(get
     db.add(new_booking)
     db.commit()
     db.refresh(new_booking)
+
+    # Trigger email notifications in the background
+    if prof_user and prof_user.email:
+        background_tasks.add_task(
+            send_email_notification,
+            recipient_email=prof_user.email,
+            subject="New Service Booking Request!",
+            body_text=f"Hi {prof_user.name},\n\nYou have a new booking request from {current_user.name} for {booking_data.service_date}.\nNotes: {booking_data.notes}\n\nLog in to your ServX dashboard to Accept or Reject it."
+        )
+
+    if current_user.email:
+        background_tasks.add_task(
+            send_email_notification,
+            recipient_email=current_user.email,
+            subject="Booking Request Placed Successfully",
+            body_text=f"Hi {current_user.name},\n\nYour booking request with {prof_user.name if prof_user else 'the professional'} for {booking_data.service_date} has been placed and is currently Pending.\n\nThank you for using ServX!"
+        )
 
     return {"message": "Booking request sent successfully!", "booking_id": new_booking.id}
 
@@ -124,7 +149,13 @@ def get_professional_bookings(current_user: User = Depends(get_current_user), db
 
 # 4. Professional updates booking status (Accept / Reject / Complete)
 @router.put("/{booking_id}/status")
-def update_booking_status(booking_id: int, status: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def update_booking_status(
+    booking_id: int, 
+    status: str, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
     if current_user.account_type != "professional":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
@@ -137,5 +168,15 @@ def update_booking_status(booking_id: int, status: str, current_user: User = Dep
 
     booking.status = status
     db.commit()
+
+    # Notify customer of status change in the background
+    customer = db.query(User).filter(User.id == booking.customer_id).first()
+    if customer and customer.email:
+        background_tasks.add_task(
+            send_email_notification,
+            recipient_email=customer.email,
+            subject=f"Your Booking Has Been {status}",
+            body_text=f"Hi {customer.name},\n\nThe professional has updated your booking status to: {status}.\n\nLog in to ServX to view details."
+        )
 
     return {"message": f"Booking status updated to {status}"}

@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from typing import Optional, List
+import math
 
 from database import get_db
 from models import User, Professional
@@ -114,7 +115,7 @@ def search_professionals(
     offset: int = Query(0, description="Offset for pagination"),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Professional, User).join(User, Professional.user_id == User.id)
+    query = db.query(Professional, User).outerjoin(User, Professional.user_id == User.id)
 
     if profession:
         clean_profession = profession.strip()
@@ -127,14 +128,18 @@ def search_professionals(
 
     # Fallback safety net for search if empty on first page load
     if not results and offset == 0:
-        results = db.query(Professional, User).join(User, Professional.user_id == User.id).limit(limit).all()
+        results = db.query(Professional, User).outerjoin(User, Professional.user_id == User.id).limit(limit).all()
 
     professionals_list = []
     for prof, user in results:
+        match_score = 100.0
+        if isinstance(match_score, float) and (math.isnan(match_score) or math.isinf(match_score)):
+            match_score = 0.0
+
         professionals_list.append({
             "id": prof.id,
-            "user_id": user.id,
-            "name": user.name,
+            "user_id": prof.user_id,
+            "name": user.name if user else "Verified Professional",
             "profession": prof.profession,
             "location": prof.location,
             "skills": prof.skills,
@@ -143,10 +148,10 @@ def search_professionals(
             "availability": prof.availability,
             "rating": prof.rating,
             "completed_jobs": prof.completed_jobs,
-            "match_score": 100.0
+            "match_score": match_score
         })
 
-    return {"professionals": professionals_list}
+    return professionals_list
 
 
 # ========================================
@@ -162,7 +167,7 @@ def get_recommended_professionals(
     offset: int = Query(0, description="Offset for pagination"),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Professional, User).join(User, Professional.user_id == User.id)
+    query = db.query(Professional, User).outerjoin(User, Professional.user_id == User.id)
 
     if profession:
         clean_profession = profession.strip()
@@ -176,21 +181,21 @@ def get_recommended_professionals(
 
     # Fail-safe fallback: If strict location/category match returns nothing on first load, try matching just the profession category
     if not results and offset == 0:
-        fallback_query = db.query(Professional, User).join(User, Professional.user_id == User.id)
+        fallback_query = db.query(Professional, User).outerjoin(User, Professional.user_id == User.id)
         if profession:
             fallback_query = fallback_query.filter(Professional.profession.ilike(f"%{profession.strip()}%"))
         results = fallback_query.limit(limit).all()
 
     # Absolute fallback if still empty
     if not results and offset == 0:
-        results = db.query(Professional, User).join(User, Professional.user_id == User.id).limit(limit).all()
+        results = db.query(Professional, User).outerjoin(User, Professional.user_id == User.id).limit(limit).all()
 
     professionals_list = []
     for prof, user in results:
         professionals_list.append({
             "id": prof.id,
-            "user_id": user.id,
-            "name": user.name,
+            "user_id": prof.user_id,
+            "name": user.name if user else "Verified Professional",
             "profession": prof.profession,
             "location": prof.location,
             "skills": prof.skills,
@@ -211,4 +216,16 @@ def get_recommended_professionals(
     except Exception:
         ranked_professionals = professionals_list
 
-    return {"recommended_professionals": ranked_professionals}
+    # Sanitize all items to ensure no NaN or infinite float values break JSON serialization
+    sanitized_results = []
+    for prof in ranked_professionals:
+        # Convert to mutable dict if it's a model or custom object, otherwise copy
+        prof_dict = dict(prof) if not isinstance(prof, dict) else prof.copy()
+        
+        score = prof_dict.get("match_score")
+        if score is None or (isinstance(score, float) and (math.isnan(score) or math.isinf(score))):
+            prof_dict["match_score"] = 0.0
+            
+        sanitized_results.append(prof_dict)
+
+    return sanitized_results
