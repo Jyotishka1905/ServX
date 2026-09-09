@@ -139,7 +139,7 @@ def search_professionals(
         professionals_list.append({
             "id": prof.id,
             "user_id": prof.user_id,
-            "name": user.name if user else "Verified Professional",
+            "name": user.name if (user and user.name) else f"Professional #{prof.id}",
             "profession": prof.profession,
             "location": prof.location,
             "skills": prof.skills,
@@ -195,7 +195,7 @@ def get_recommended_professionals(
         professionals_list.append({
             "id": prof.id,
             "user_id": prof.user_id,
-            "name": user.name if user else "Verified Professional",
+            "name": user.name if (user and user.name) else f"Professional #{prof.id}",
             "profession": prof.profession,
             "location": prof.location,
             "skills": prof.skills,
@@ -219,7 +219,6 @@ def get_recommended_professionals(
     # Sanitize all items to ensure no NaN or infinite float values break JSON serialization
     sanitized_results = []
     for prof in ranked_professionals:
-        # Convert to mutable dict if it's a model or custom object, otherwise copy
         prof_dict = dict(prof) if not isinstance(prof, dict) else prof.copy()
         
         score = prof_dict.get("match_score")

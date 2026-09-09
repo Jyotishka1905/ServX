@@ -159,9 +159,16 @@ def update_booking_status(
     if current_user.account_type != "professional":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
+    prof = db.query(Professional).filter(Professional.user_id == current_user.id).first()
+    if not prof:
+        raise HTTPException(status_code=404, detail="Professional profile not found")
+
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+
+    if booking.professional_id != prof.id:
+        raise HTTPException(status_code=403, detail="Unauthorized to modify this booking")
 
     if status not in ["Accepted", "Rejected", "Completed"]:
         raise HTTPException(status_code=400, detail="Invalid status update value")

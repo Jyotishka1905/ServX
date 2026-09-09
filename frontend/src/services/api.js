@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8001', // Change this to your production URL later if needed
+  baseURL: 'http://127.0.0.1:8001', // Changed to match the exact host loopback
   headers: {
     'Content-Type': 'application/json',
   },

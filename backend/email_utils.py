@@ -1,26 +1,25 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
+
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SENDER_EMAIL = "your_email@gmail.com"
+SENDER_PASSWORD = "your_email_app_password"
 
 def send_email_notification(recipient_email: str, subject: str, body_text: str):
-    # Configure your sender email credentials (or use environment variables)
-    sender_email = os.getenv("SMTP_SENDER", "your-email@gmail.com")
-    sender_password = os.getenv("SMTP_PASSWORD", "your-gmail-app-password")
-    smtp_server = "smtp.gmail.com"
-    smtp_port = 587
-
     try:
-        msg = MIMEMultipart()
-        msg["From"] = sender_email
-        msg["To"] = recipient_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body_text, "plain"))
+        message = MIMEMultipart()
+        message["From"] = SENDER_EMAIL
+        message["To"] = recipient_email
+        message["Subject"] = subject
 
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        message.attach(MIMEText(body_text, "plain"))
+
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.sendmail(SENDER_EMAIL, recipient_email, message.as_string())
         print(f"Email successfully sent to {recipient_email}")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        print(f"Failed to send email to {recipient_email}: {e}")

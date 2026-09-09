@@ -8,8 +8,30 @@ function ProfessionalCard({
   location,
   verified,
   matchScore,
-  onBookClick // <-- Prop to handle booking action
+  onBookClick // Prop to handle booking action
 }) {
+  
+  const handleBookingClick = () => {
+    // Check if user is logged in as a customer
+    const userRole = localStorage.getItem("accountType") || localStorage.getItem("account_type");
+    const userToken = localStorage.getItem("token");
+
+    if (!userToken) {
+      alert("Please sign in first to book a service!");
+      return;
+    }
+
+    if (userRole && userRole.toLowerCase() !== "customer") {
+      alert("Please log in as a customer first to book a service!");
+      return;
+    }
+
+    // If check passes, trigger the booking modal / action
+    if (onBookClick) {
+      onBookClick({ id, name, profession, price });
+    }
+  };
+
   return (
     <div className="professional-card">
 
@@ -64,8 +86,8 @@ function ProfessionalCard({
             ₹{price}
           </strong>
 
-          {/* Connected the click action to trigger booking */}
-          <button onClick={() => onBookClick && onBookClick({ id, name, profession, price })}>
+          {/* Connected to safety check handler */}
+          <button onClick={handleBookingClick}>
             Book Now
           </button>
 
